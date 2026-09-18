@@ -227,7 +227,7 @@ def select_observed_teach(events, pending):
     return None
 
 
-# Mirrors the browser client's CONFIRM_GESTURES vocabulary (frontend/app.js) so
+# Mirrors the browser client's CONFIRM_GESTURES vocabulary (frontend/js/app.js) so
 # both real-input paths teach and match against the same gesture_key space.
 GESTURE_DIRECTIONS = {
     "swipe": {"left", "right"},
@@ -264,7 +264,7 @@ def observation_payload(user_id, activity, active_app, direction, *,
 
 def _teach(api_url, user_id, observation_id, action_type, target) -> str:
     result = post_json(
-        f"{api_url}/teach",
+        f"{api_url}/teachings",
         {"user_id": user_id, "observation_id": observation_id,
          "action_type": action_type, "target": target, "parameters": {}},
     )
@@ -288,7 +288,7 @@ def _detect_and_report(api_url, user_id, request_activity, active_app, motion_ty
         motion_type=motion_type, duration_ms=duration_ms, speed=speed, amplitude=amplitude,
         attempt_inference=not learn,
     )
-    result = post_json(f"{api_url}/observe", payload)
+    result = post_json(f"{api_url}/observations", payload)
     observation_id = result["observation"]["id"]
     resolved_activity = result["context"]["activity"]
     inference = result["inference"]

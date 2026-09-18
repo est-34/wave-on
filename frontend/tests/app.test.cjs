@@ -3,12 +3,14 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
-const source = fs.readFileSync(path.join(__dirname, '../app.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
 function app(fetch) {
   const elements = new Map();
   const element = id => {
     if (!elements.has(id)) elements.set(id, {textContent: '', innerHTML: '', dataset: {}, hidden: true,
-      open: false, showModal() { this.open = true; }, querySelectorAll: () => []});
+      disabled: false, setAttribute() {}, removeAttribute() {},
+      classList: {remove() {}, add() {}, toggle() {}},
+      open: false, close() { this.open = false; }, showModal() { this.open = true; }, querySelectorAll: () => []});
     return elements.get(id);
   };
   const context = vm.createContext({fetch, document: {getElementById: element, addEventListener() {}, querySelectorAll: () => []}, window: {}});
@@ -41,7 +43,7 @@ test('FAILED overlay includes error, context and confidence without success stat
   const ui = app();
   ui.run(`showActionOverlay({intent:'NEXT_SLIDE', confidence:0.9, execution:{status:'FAILED', error_message:'blocked'}})`);
   assert.equal(ui.element('actionOverlay').dataset.status, 'failed');
-  assert.match(ui.element('overlayConfidence').textContent, /presentation.*90%.*blocked/);
+  assert.match(ui.element('overlayConfidence').textContent, /발표.*90%.*blocked/);
 });
 
 function syntheticFrame(width, height, blockX) {
@@ -109,4 +111,105 @@ test('camera circle tracker recognizes a full loop of the moving centroid but no
   }
   assert.ok(result);
   assert.equal(result.durationMs, 1100);
+});
+
+test('input transaction ignores overlapping operations and releases after failure', async () => {
+  const ui = app();
+  let finish;
+  const pending = new Promise(resolve => { finish = resolve; });
+  // Expose a delayed request through the existing request helper.
+  const delayed = app(async () => { await pending; return {ok: true, status: 204}; });
+  const first = delayed.run('withInputBusy(() => request("/test"))');
+  assert.equal(delayed.run('inputBusy'), true);
+  assert.equal(await delayed.run('withInputBusy(() => { throw Error("overlap"); })'), undefined);
+  finish();
+  await first;
+  assert.equal(delayed.run('inputBusy'), false);
+  await assert.rejects(ui.run('withInputBusy(() => { throw Error("offline"); })'), /offline/);
+  assert.equal(ui.run('inputBusy'), false);
+  ui.run('demoModeEnabled = false');
+  await ui.run('withInputBusy(() => {})');
+  assert.equal(ui.element('resetButton').disabled, true);
+});
+
+test('camera preserves an observation awaiting a teaching action', async () => {
+  let calls = 0;
+  const ui = app(async () => { calls++; throw Error('unexpected request'); });
+  ui.run('lastObservation = {id: 42}');
+  await ui.run('submitCameraGesture("swipe", "left", 430, 1, 1)');
+  assert.equal(calls, 0);
+  assert.equal(ui.run('lastObservation.id'), 42);
+});
+
+test('teaching exposes repeat input, then a pending suggestion hides it', async () => {
+  let pending = false;
+  const ui = app(async url => ({ok: true, status: 200, json: async () => url.endsWith('/teachings')
+    ? {progress_current: pending ? 3 : 1, progress_required: 3, suggestion: pending ? {status: 'PENDING'} : null}
+    : state}));
+  ui.run('lastObservation = {id: 42}; lastGestureLabel = "오른쪽 손짓"; lastGestureButton = {}');
+  await ui.run('teachAction("NEXT_SLIDE", "powerpoint")');
+  assert.equal(ui.element('repeatGesture').hidden, false);
+  assert.match(ui.element('repeatGesture').textContent, /오른쪽 손짓/);
+  assert.equal(ui.run('lastObservation'), null);
+  pending = true;
+  // Avoid the notification timer in this minimal DOM harness.
+  ui.run('showToast = () => {}; lastObservation = {id: 43}');
+  await ui.run('teachAction("NEXT_SLIDE", "powerpoint")');
+  assert.equal(ui.element('repeatGesture').hidden, true);
+});
+
+test('simulation result explicitly says the real app was not controlled', () => {
+  const ui = app();
+  ui.run('showActionOverlay({intent: "NEXT_SLIDE", confidence: 0.9, execution: {status: "SIMULATED"}})');
+  assert.match(ui.element('overlayConfidence').textContent, /시뮬레이션.*실제 앱/);
+});
+
+test('approved context shows learned memories instead of zero learning progress', async () => {
+  const ui = app(async () => ({ok: true, status: 200, json: async () => ({...state,
+    candidates: [], memories: [{gesture_key: 'swipe:right', context_scope: 'presentation', confidence: 0.9, intent: 'NEXT_SLIDE'}]})}));
+  await ui.run('refreshDashboard()');
+  assert.equal(ui.element('learningProgress').textContent, '기억 1개');
+});
+
+test('learning panels appear only when actionable and empty memory links to learning', () => {
+  const ui = app();
+  ui.run('renderSuggestions([], [])');
+  assert.equal(ui.element('suggestionPanel').hidden, true);
+  assert.equal(ui.element('confirmationControls').hidden, true);
+  ui.run('renderSuggestions([{id: 1, suggested_intent: "NEXT_SLIDE", confidence: 0.9}], [])');
+  assert.equal(ui.element('suggestionPanel').hidden, false);
+  assert.equal(ui.element('confirmationControls').hidden, false);
+  ui.run('renderSuggestions([], []); renderMemories([]); renderInterpretations([])');
+  assert.match(ui.element('memoryList').innerHTML, /href="#workspace-task"/);
+  assert.match(ui.element('interpretationList').innerHTML, /href="#workspace-task"/);
+  ui.run('updateTeachingCard("행동 선택", "설명")');
+  assert.equal(ui.element('teachingCard').hidden, false);
+});
+
+test('accept and reject suggestions both clear stale teaching and explain the next step', async () => {
+  for (const decision of ['ACCEPTED', 'REJECTED']) {
+    const ui = app(async url => ({ok: true, status: url.endsWith('/responses') ? 204 : 200, json: async () => state}));
+    ui.run('lastObservation = {id: 42}; lastGestureButton = {};');
+    await ui.run(`respondSuggestion(1, '${decision}')`);
+    assert.equal(ui.run('lastObservation'), null);
+    assert.equal(ui.element('teachingCard').hidden, true);
+    assert.equal(ui.element('repeatGesture').hidden, true);
+    assert.equal(ui.element('suggestionPanel').hidden, true);
+    assert.match(ui.element('stageDescription').textContent, decision === 'ACCEPTED' ? /다시 입력.*시뮬레이션/ : /다시 알려/);
+  }
+});
+
+
+test('connection retry restores bootstrap configuration before loading the dashboard', async () => {
+  const calls = [];
+  const ui = app(async url => {
+    calls.push(url);
+    return {ok: true, status: 200, json: async () => url.endsWith('/demo/bootstrap')
+      ? {intent_labels: {NEXT_SLIDE: '다음 슬라이드'}, auto_execution_threshold: 0.6, os_actions_enabled: false, demo_mode: true}
+      : state};
+  });
+  await ui.run('loadWorkspace()');
+  assert.deepEqual(calls, ['/api/v1/demo/bootstrap', '/api/v1/dashboard?user_id=demo-user']);
+  assert.equal(ui.run('intentLabel("NEXT_SLIDE")'), '다음 슬라이드');
+  assert.equal(ui.element('dashboardConnection').hidden, true);
 });

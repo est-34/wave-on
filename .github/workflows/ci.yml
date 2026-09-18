@@ -8,9 +8,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,3 +32,7 @@ jobs:
           --queries backend/sql/queries.sql
           --tests backend/sql/tests.sql
           --report /tmp/sqlite-validation.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test frontend/tests/*.test.cjs

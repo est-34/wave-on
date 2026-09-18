@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="452" viewBox="0 0 1280 452" role="img" aria-labelledby="title desc">
+  <title id="title">SilentOrchestra 2.0 핵심 기능</title>
+  <desc id="desc">몸짓과 후속 행동을 발표·음악 맥락별로 학습합니다. 반복에서 발견한 연결을 제안하고 사용자가 승인한 기억만 실행합니다. 실행 결과의 피드백으로 기억을 보정하며 원본 카메라 프레임은 저장하거나 전송하지 않습니다.</desc>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; fill: #1A2028; }
+    .heading { font-size: 27px; font-weight: 700; }
+    .subtitle { font-size: 19px; fill: #525862; }
+    .body { font-size: 19px; }
+    .label { font-size: 18px; font-weight: 700; fill: #526FA8; }
+    .role { font-size: 17px; font-weight: 700; fill: #526FA8; }
+    .icon { fill: none; stroke: #526FA8; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="1280" height="452" rx="16" fill="#EEF2F8"/>
+  <g transform="translate(24 24)">
+    <rect width="400" height="404" rx="14" fill="#FFFFFF" stroke="#DBDEE3"/>
+    <rect x="24" y="24" width="64" height="64" rx="16" fill="#EEF2F8"/>
+    <g class="icon" transform="translate(32 32)" aria-hidden="true"><circle cx="10" cy="24" r="5"/><circle cx="38" cy="10" r="5"/><circle cx="38" cy="38" r="5"/><path d="M15 22l18-10M15 26l18 10M38 15v18"/></g>
+    <text x="104" y="63" class="label">01 | 몸짓·맥락 학습</text>
+    <text x="24" y="132" class="heading">반복에서 의도 배우기</text>
+    <text x="24" y="164" class="subtitle">몸짓 뒤의 행동을 활동별로 연결</text>
+    <path d="M24 190H376" stroke="#DBDEE3"/>
+    <text x="24" y="226" class="role">관찰 · 패턴 발견</text>
+    <text x="24" y="257" class="body">반복된 몸짓·행동에서 연결 학습</text>
+    <text x="24" y="315" class="role">활동별 기억</text>
+    <text x="24" y="346" class="body">같은 몸짓도 발표·음악에 맞게</text>
+  </g>
+  <g transform="translate(440 24)">
+    <rect width="400" height="404" rx="14" fill="#FFFFFF" stroke="#DBDEE3"/>
+    <rect x="24" y="24" width="64" height="64" rx="16" fill="#EEF2F8"/>
+    <g class="icon" transform="translate(32 32)" aria-hidden="true"><path d="M24 4l17 7v13c0 10-7 16-17 21C14 40 7 34 7 24V11ZM15 24l6 6 12-13"/></g>
+    <text x="104" y="63" class="label">02 | 승인 후 실행</text>
+    <text x="24" y="132" class="heading">확인한 연결만 실행</text>
+    <text x="24" y="164" class="subtitle">제안을 검토하고 실행 여부 결정</text>
+    <path d="M24 190H376" stroke="#DBDEE3"/>
+    <text x="24" y="226" class="role">제안 · 승인</text>
+    <text x="24" y="257" class="body">학습한 연결을 승인·수정·거절</text>
+    <text x="24" y="315" class="role">기억 · 실행</text>
+    <text x="24" y="346" class="body">승인된 기억과 현재 맥락 확인</text>
+  </g>
+  <g transform="translate(856 24)">
+    <rect width="400" height="404" rx="14" fill="#FFFFFF" stroke="#DBDEE3"/>
+    <rect x="24" y="24" width="64" height="64" rx="16" fill="#EEF2F8"/>
+    <g class="icon" transform="translate(32 32)" aria-hidden="true"><path d="M39 17A17 17 0 0 0 9 12L5 18M5 7v11h11M9 31a17 17 0 0 0 30 5l4-6M43 41V30H32M17 24l5 5 9-10"/></g>
+    <text x="104" y="63" class="label">03 | 피드백·정보 보호</text>
+    <text x="24" y="132" class="heading">쓰면서 기억 다듬기</text>
+    <text x="24" y="164" class="subtitle">결과를 교정하며 신뢰도를 조정</text>
+    <path d="M24 190H376" stroke="#DBDEE3"/>
+    <text x="24" y="226" class="role">실행 결과 피드백</text>
+    <text x="24" y="257" class="body">정답·오답·우발 몸짓을 구분</text>
+    <text x="24" y="315" class="role">로컬 우선 · 개인정보 보호</text>
+    <text x="24" y="346" class="body">원본 프레임 저장·전송 없음</text>
+  </g>
+</svg>

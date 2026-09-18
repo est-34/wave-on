@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1568" height="452" viewBox="0 0 1568 452" style="max-width:100%;height:auto" role="img" aria-labelledby="title desc">
+  <title id="title">SilentOrchestra 2.0 시스템 아키텍처</title>
+  <desc id="desc">브라우저와 선택적 Python 웹캠 클라이언트가 모션 특징과 맥락을 HTTP로 전달합니다. 단일 FastAPI 서버의 agent, identity, demo 모듈은 도메인과 유스케이스를 포함합니다. 저장소와 OS 어댑터는 코어의 포트를 구현하고 bootstrap.py와 main.py가 구현을 연결합니다. SQLite 또는 PostgreSQL에 특징과 학습 기억을 저장하며, 명시적으로 활성화한 경우에만 로컬 OS 동작을 수행합니다. 화살표는 주요 실행 흐름이며 소스 의존성이 아닙니다. 원본 프레임은 저장하거나 전송하지 않습니다.</desc>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; fill: #1A2028; }
+    .heading { font-size: 27px; font-weight: 700; }
+    .subtitle { font-size: 19px; fill: #525862; }
+    .body { font-size: 19px; }
+    .label { font-size: 18px; font-weight: 700; fill: #526FA8; }
+    .role { font-size: 17px; font-weight: 700; fill: #526FA8; }
+    .icon { fill: none; stroke: #526FA8; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="1568" height="452" rx="16" fill="#EEF2F8"/>
+  <g transform="translate(24 24)">
+    <rect width="400" height="404" rx="14" fill="#FFFFFF" stroke="#DBDEE3"/>
+    <rect x="24" y="24" width="64" height="64" rx="16" fill="#EEF2F8"/>
+    <g class="icon" transform="translate(32 32)" aria-hidden="true"><rect x="3" y="5" width="42" height="31" rx="4"/><path d="M3 13h42M18 43h12M24 36v7"/></g>
+    <text x="104" y="63" class="label">01 | 사용자 입력</text>
+    <text x="24" y="126" class="heading">브라우저 · 웹캠</text>
+    <text x="24" y="154" class="subtitle">HTML · CSS · JavaScript</text>
+    <text x="24" y="181" class="subtitle">선택적 Python · OpenCV 클라이언트</text>
+    <path d="M24 200H376" stroke="#DBDEE3"/>
+    <text x="24" y="233" class="role">몸짓 · 맥락 · 후속 행동</text>
+    <text x="24" y="264" class="body">로컬 특징 추출 · 원본 프레임 미전송</text>
+    <text x="24" y="315" class="role">기억 · 제안 · 실행 결과</text>
+    <text x="24" y="346" class="body">사용자 승인 · 교정 · 피드백</text>
+  </g>
+  <g transform="translate(584 24)">
+    <rect width="400" height="404" rx="14" fill="#FFFFFF" stroke="#DBDEE3"/>
+    <rect x="24" y="24" width="64" height="64" rx="16" fill="#EEF2F8"/>
+    <g class="icon" transform="translate(32 32)" aria-hidden="true"><rect x="4" y="5" width="40" height="16" rx="4"/><rect x="4" y="27" width="40" height="16" rx="4"/><path d="M12 13h1M12 35h1M23 13h13M23 35h13"/></g>
+    <text x="104" y="63" class="label">02 | 핵심 처리</text>
+    <text x="24" y="126" class="heading">FastAPI 서버</text>
+    <text x="24" y="154" class="subtitle">Python · 모듈러 모놀리스</text>
+    <text x="24" y="181" class="subtitle">헥사고날 아키텍처</text>
+    <path d="M24 200H376" stroke="#DBDEE3"/>
+    <text x="24" y="233" class="role">HTTP → 공개 모듈 API</text>
+    <text x="24" y="264" class="body">agent · identity · demo</text>
+    <text x="24" y="315" class="role">Application · Domain</text>
+    <text x="24" y="346" class="body">모듈별 포트 · SQL / OS 어댑터</text>
+  </g>
+  <g transform="translate(1144 24)">
+    <rect width="400" height="404" rx="14" fill="#FFFFFF" stroke="#DBDEE3"/>
+    <rect x="24" y="24" width="64" height="64" rx="16" fill="#EEF2F8"/>
+    <g class="icon" transform="translate(32 32)" aria-hidden="true"><ellipse cx="24" cy="9" rx="18" ry="6"/><path d="M6 9v30c0 8 36 8 36 0V9M6 24c0 8 36 8 36 0"/></g>
+    <text x="104" y="63" class="label">03 | 데이터·OS 연동</text>
+    <text x="24" y="126" class="heading">SQLite / PostgreSQL</text>
+    <text x="24" y="154" class="subtitle">SQLAlchemy · 단일 DB</text>
+    <text x="24" y="181" class="subtitle">모션 특징 · 기억 · 실행 · 피드백</text>
+    <path d="M24 200H376" stroke="#DBDEE3"/>
+    <text x="24" y="233" class="role">로컬 OS 어댑터</text>
+    <text x="24" y="264" class="body">활성 창 확인 · 선택적 키 전송</text>
+    <text x="24" y="315" class="role">승인된 기억만 실행</text>
+    <text x="24" y="346" class="body">기본 DRY_RUN · OS 실행 명시 설정</text>
+  </g>
+  <g>
+    <text x="504" y="207" class="role" text-anchor="middle">HTTP</text>
+    <text x="1064" y="207" class="role" text-anchor="middle">출력 어댑터</text>
+    <path d="M440 226H568m-8-6 8 6-8 6M1000 226H1128m-8-6 8 6-8 6" fill="none" stroke="#526FA8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"/>
+  </g>
+</svg>

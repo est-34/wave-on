@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+from scalar_fastapi import add_scalar_reference
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -9,7 +10,10 @@ from . import models  # noqa: F401 - registers SQLAlchemy metadata
 from .config import PROJECT_ROOT, settings
 from .database import SessionLocal, init_db
 from .routers import agent, demo, health, users
-from .services.demo_service import ensure_demo_user
+from .modules.demo.api import ensure_demo_user
+from .modules.demo.adapters.repository import DemoRepository
+from .shared.errors import ApplicationError
+from fastapi.responses import JSONResponse
 
 STATIC_DIR = PROJECT_ROOT / "frontend"
 
@@ -20,11 +24,12 @@ async def lifespan(_app: FastAPI):
         (PROJECT_ROOT / "data").mkdir(parents=True, exist_ok=True)
     init_db()
     with SessionLocal() as db:
-        ensure_demo_user(db)
+        ensure_demo_user(DemoRepository(db))
     yield
 
 
 app = FastAPI(
+    docs_url=None,
     title=settings.app_name,
     version="0.1.0",
     description=(
@@ -33,6 +38,7 @@ app = FastAPI(
     ),
     lifespan=lifespan,
 )
+add_scalar_reference(app, route="/docs")
 
 app.add_middleware(
     CORSMiddleware,
@@ -65,3 +71,8 @@ async def revalidate_static(request, call_next):
 @app.get("/", include_in_schema=False)
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.exception_handler(ApplicationError)
+async def application_error(_request, exc: ApplicationError):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
