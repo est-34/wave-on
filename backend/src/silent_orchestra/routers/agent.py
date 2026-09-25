@@ -1,147 +1,61 @@
-from uuid import uuid4
-
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import desc, func, select
-from sqlalchemy.orm import Session
-
-from ..config import settings
-from ..database import get_db
-from ..models import (
-    Action,
-    AgentSuggestion,
-    Context,
-    Execution,
-    Feedback,
-    GestureObservation,
-    GesturePattern,
-    User,
-)
+from fastapi import APIRouter, Depends
+from ..bootstrap import get_agent_dependencies
+from ..modules.agent import api
 from ..schemas import (
-    DashboardResponse,
-    FeedbackCreate,
-    FeedbackResponse,
-    InferenceResult,
     ObserveRequest,
     ObserveResponse,
-    PatternRead,
+    TeachRequest,
+    TeachResponse,
     SuggestionRead,
     SuggestionResponse,
     SuggestionResponseRequest,
-    TeachRequest,
-    TeachResponse,
+    PatternRead,
+    FeedbackCreate,
+    FeedbackResponse,
+    DashboardResponse,
 )
-from ..services.confirmation import apply_confirmation, is_confirm_gesture
-from ..services.feedback_service import record_feedback
-from ..services.context_resolver import resolve_context
-from ..services.gesture_encoder import encode_gesture, gesture_key
-from ..services.intent_reasoner import infer_intent
-from ..services.pattern_learning import record_user_action, respond_to_suggestion
 
 router = APIRouter(tags=["agent"])
 
 
-def _get_or_404(db: Session, model: type, key: str, label: str):
-    instance = db.get(model, key)
-    if instance is None:
-        raise HTTPException(status_code=404, detail=f"{label} not found")
-    return instance
-
-
 @router.post("/observe", response_model=ObserveResponse)
-def observe(payload: ObserveRequest, db: Session = Depends(get_db)) -> dict:
-    _get_or_404(db, User, payload.user_id, "User")
-    try:
-        activity, active_app = resolve_context(payload.context.activity, payload.context.active_app)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    context = Context(
-        id=str(uuid4()),
-        user_id=payload.user_id,
-        active_app=active_app,
-        activity=activity,
-        space=payload.context.space,
-        device=payload.context.device,
-    )
-    observation = GestureObservation(
-        id=str(uuid4()),
-        user_id=payload.user_id,
-        context_id=context.id,
-        gesture_key=gesture_key(payload.gesture.motion_type, payload.gesture.direction),
-        gesture_embedding=payload.gesture.embedding
-        or encode_gesture(
-            payload.gesture.motion_type,
-            payload.gesture.direction,
-            payload.gesture.duration_ms,
-            payload.gesture.speed,
-            payload.gesture.amplitude,
+def observe(payload: ObserveRequest, db=Depends(get_agent_dependencies)):
+    return api.observe(
+        payload=api.contracts.ObserveRequest(
+            user_id=payload.user_id,
+            context=api.contracts.ContextInput(**payload.context.model_dump()),
+            gesture=api.contracts.GestureInput(**payload.gesture.model_dump()),
+            attempt_inference=payload.attempt_inference,
         ),
-        motion_type=payload.gesture.motion_type,
-        direction=payload.gesture.direction,
-        duration_ms=payload.gesture.duration_ms,
-        speed=payload.gesture.speed,
-        amplitude=payload.gesture.amplitude,
-        frame_stored=False,
+        db=db,
     )
-    db.add_all([context, observation])
-    db.commit()
-
-    # A reserved confirm gesture never becomes a learnable candidate itself -
-    # it only answers whatever suggestion or unrated execution is waiting.
-    if is_confirm_gesture(observation.gesture_key):
-        matched, reason, intent = apply_confirmation(
-            db, payload.user_id, activity, observation.gesture_key
-        )
-        inference = InferenceResult(matched=matched, intent=intent, reason=reason)
-    elif payload.attempt_inference:
-        inference = infer_intent(db, observation, context)
-    else:
-        inference = InferenceResult(matched=False, reason="추론을 요청하지 않았습니다.")
-    return {"context": context, "observation": observation, "inference": inference}
 
 
 @router.post("/teach", response_model=TeachResponse)
-def teach(payload: TeachRequest, db: Session = Depends(get_db)) -> dict:
-    _get_or_404(db, User, payload.user_id, "User")
-    try:
-        action, pattern, suggestion = record_user_action(db, payload)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {
-        "action": action,
-        "pattern": pattern,
-        "suggestion": suggestion,
-        "progress_current": min(pattern.observation_count, settings.suggestion_threshold),
-        "progress_required": settings.suggestion_threshold,
-    }
+def teach(payload: TeachRequest, db=Depends(get_agent_dependencies)):
+    return api.teach(payload=api.contracts.TeachRequest(**payload.model_dump()), db=db)
 
 
 @router.get("/suggestions", response_model=list[SuggestionRead])
 def list_suggestions(
     user_id: str,
     status: str | None = None,
-    db: Session = Depends(get_db),
-) -> list[AgentSuggestion]:
-    _get_or_404(db, User, user_id, "User")
-    stmt = select(AgentSuggestion).where(AgentSuggestion.user_id == user_id)
-    if status:
-        stmt = stmt.where(AgentSuggestion.status == status.upper())
-    return list(db.scalars(stmt.order_by(desc(AgentSuggestion.created_at))).all())
+    db=Depends(get_agent_dependencies),
+):
+    return api.list_suggestions(user_id=user_id, status=status, db=db)
 
 
 @router.post("/suggestions/{suggestion_id}/respond", response_model=SuggestionResponse)
 def respond_suggestion(
     suggestion_id: str,
     payload: SuggestionResponseRequest,
-    db: Session = Depends(get_db),
-) -> dict:
-    suggestion = _get_or_404(db, AgentSuggestion, suggestion_id, "Suggestion")
-    try:
-        updated, pattern = respond_to_suggestion(
-            db, suggestion, payload.decision, payload.modified_intent
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"suggestion": updated, "pattern": pattern}
+    db=Depends(get_agent_dependencies),
+):
+    return api.respond_suggestion(
+        suggestion_id=suggestion_id,
+        payload=api.contracts.SuggestionResponseRequest(**payload.model_dump()),
+        db=db,
+    )
 
 
 @router.get("/memories", response_model=list[PatternRead])
@@ -149,132 +63,26 @@ def list_memories(
     user_id: str,
     gesture_key: str | None = None,
     context_scope: str | None = None,
-    db: Session = Depends(get_db),
-) -> list[GesturePattern]:
-    _get_or_404(db, User, user_id, "User")
-    stmt = select(GesturePattern).where(
-        GesturePattern.user_id == user_id,
-        GesturePattern.status == "ACTIVE",
-        GesturePattern.confidence >= settings.auto_execution_threshold,
+    db=Depends(get_agent_dependencies),
+):
+    return api.list_memories(
+        user_id=user_id, gesture_key=gesture_key, context_scope=context_scope, db=db
     )
-    if gesture_key:
-        stmt = stmt.where(GesturePattern.gesture_key == gesture_key)
-    if context_scope:
-        stmt = stmt.where(GesturePattern.context_scope == context_scope)
-    return list(db.scalars(stmt.order_by(desc(GesturePattern.updated_at))).all())
 
 
 @router.post("/executions/{execution_id}/feedback", response_model=FeedbackResponse)
 def submit_feedback(
     execution_id: str,
     payload: FeedbackCreate,
-    db: Session = Depends(get_db),
-) -> dict:
-    execution = _get_or_404(db, Execution, execution_id, "Execution")
-    try:
-        feedback, pattern = record_feedback(
-            db, execution, payload.user_id, payload.feedback_type, payload.corrected_intent
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"feedback": feedback, "pattern": pattern}
+    db=Depends(get_agent_dependencies),
+):
+    return api.submit_feedback(
+        execution_id=execution_id,
+        payload=api.contracts.FeedbackCreate(**payload.model_dump()),
+        db=db,
+    )
 
 
 @router.get("/dashboard", response_model=DashboardResponse)
-def dashboard(user_id: str, db: Session = Depends(get_db)) -> dict:
-    _get_or_404(db, User, user_id, "User")
-
-    def recent(model, order_column, *conditions, limit: int | None = None) -> list:
-        stmt = (
-            select(model)
-            .where(model.user_id == user_id, *conditions)
-            .order_by(desc(order_column))
-            .limit(limit)
-        )
-        return list(db.scalars(stmt).all())
-
-    def total(model) -> int:
-        return db.scalar(select(func.count(model.id)).where(model.user_id == user_id)) or 0
-
-    memories = recent(GesturePattern, GesturePattern.updated_at, GesturePattern.status == "ACTIVE")
-    candidates = recent(
-        GesturePattern, GesturePattern.updated_at, GesturePattern.status == "CANDIDATE"
-    )
-    suggestions = recent(
-        AgentSuggestion, AgentSuggestion.created_at, AgentSuggestion.status == "PENDING"
-    )
-    observations = recent(GestureObservation, GestureObservation.detected_at, limit=8)
-    actions = recent(Action, Action.executed_at, limit=8)
-    executions = recent(Execution, Execution.executed_at, limit=8)
-
-    audit_rows = db.execute(
-        select(Execution, GesturePattern, Feedback)
-        .join(GesturePattern, Execution.gesture_pattern_id == GesturePattern.id)
-        .outerjoin(Feedback, Feedback.execution_id == Execution.id)
-        .where(Execution.user_id == user_id)
-        .order_by(desc(Execution.executed_at))
-        .limit(10)
-    ).all()
-    execution_audit = [
-        {
-            "id": execution.id,
-            "executed_at": execution.executed_at,
-            "gesture_key": pattern.gesture_key,
-            "motion_type": pattern.motion_type,
-            "direction": pattern.direction,
-            "context_scope": pattern.context_scope,
-            "intent": execution.intent,
-            "target": execution.target,
-            "confidence": execution.confidence,
-            "execution_mode": execution.execution_mode,
-            "status": execution.status,
-            "error_message": execution.error_message,
-            "feedback_type": feedback.feedback_type if feedback else None,
-        }
-        for execution, pattern, feedback in audit_rows
-    ]
-
-    events = [
-        {
-            "time": item.detected_at,
-            "type": "observation",
-            "title": f"{item.motion_type} / {item.direction}",
-            "detail": "원본 프레임은 저장하지 않고 특징 벡터만 기록",
-        }
-        for item in observations
-    ] + [
-        {
-            "time": item.executed_at,
-            "type": "action",
-            "title": item.action_type,
-            "detail": f"사용자 후속 행동 / {item.target}",
-        }
-        for item in actions
-    ] + [
-        {
-            "time": item.executed_at,
-            "type": "execution",
-            "title": item.intent,
-            "detail": item.error_message
-            or f"Agent {item.status} / confidence {item.confidence:.0%}",
-            "status": item.status,
-        }
-        for item in executions
-    ]
-    events.sort(key=lambda event: event["time"], reverse=True)
-
-    return {
-        "context": next(iter(recent(Context, Context.captured_at, limit=1)), None),
-        "counts": {
-            "observations": total(GestureObservation),
-            "learned_memories": len(memories),
-            "pending_suggestions": len(suggestions),
-            "feedback": total(Feedback),
-        },
-        "memories": memories,
-        "candidates": candidates,
-        "suggestions": suggestions,
-        "events": events[:12],
-        "execution_audit": execution_audit,
-        "threshold": settings.suggestion_threshold,
-    }
+def dashboard(user_id: str, db=Depends(get_agent_dependencies)):
+    return api.dashboard(user_id=user_id, db=db)

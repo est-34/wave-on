@@ -135,7 +135,7 @@ class ExecutionRead(ORMModel):
     executed_at: datetime
 
 
-class InferenceResult(BaseModel):
+class InferenceResult(ORMModel):
     matched: bool
     intent: str | None = None
     target: str | None = None

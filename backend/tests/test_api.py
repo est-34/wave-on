@@ -365,11 +365,11 @@ def test_macos_active_window_merges_the_window_title(monkeypatch):
 
 def test_failed_execution_is_visible_as_failed_in_the_dashboard(client, monkeypatch):
     """FR-15: the dashboard separates a failed execution from a successful one."""
-    from silent_orchestra.services import intent_reasoner
+    from silent_orchestra.adapters import action_executor
 
     train_and_accept(client, "presentation", "PowerPoint", "NEXT_SLIDE", "powerpoint")
     monkeypatch.setattr(
-        intent_reasoner, "execute_action", lambda *_: ("OS", "FAILED", "대상 앱이 활성 상태가 아닙니다.")
+        action_executor, "execute_action", lambda *_: ("OS", "FAILED", "대상 앱이 활성 상태가 아닙니다.")
     )
     result = observe(client)
     assert result["inference"]["execution"]["status"] == "FAILED"
@@ -561,3 +561,18 @@ def test_privacy_db_rejects_raw_frame_insert_and_update(client, db_engine):
             with db_engine.begin() as connection:
                 connection.exec_driver_sql(sql, parameters)
     assert dashboard(client)["counts"]["observations"] == 1
+
+
+def test_agent_rejects_unknown_user_through_identity_lookup(client):
+    for path in ("suggestions", "memories", "dashboard"):
+        response = client.get(f"/api/v1/{path}", params={"user_id": "missing-user"})
+        assert response.status_code == 404
+        assert response.json() == {"detail": "User not found"}
+
+    response = client.post("/api/v1/observe", json={
+        "user_id": "missing-user",
+        "context": {"activity": "presentation"},
+        "gesture": {"motion_type": "swipe", "direction": "right"},
+    })
+    assert response.status_code == 404
+    assert dashboard(client)["counts"]["observations"] == 0

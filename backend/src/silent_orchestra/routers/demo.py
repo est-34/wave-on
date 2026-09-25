@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 
 from ..config import settings
-from ..database import get_db
+from ..bootstrap import get_demo_repository
 from ..schemas import DemoBootstrapResponse, DemoResetResponse
-from ..services.action_catalog import ACTION_LABELS
-from ..services.demo_service import ensure_demo_user, reset_demo_user
+from ..modules.agent.api import ACTION_LABELS
+from ..modules.demo.api import ensure_demo_user, reset_demo_user
 
 router = APIRouter(prefix="/demo", tags=["demo"])
 
@@ -22,12 +21,12 @@ def _demo_state(user) -> dict:
 
 
 @router.post("/bootstrap", response_model=DemoBootstrapResponse)
-def bootstrap(db: Session = Depends(get_db)) -> dict:
+def bootstrap(db=Depends(get_demo_repository)) -> dict:
     return _demo_state(ensure_demo_user(db))
 
 
 @router.post("/reset", response_model=DemoResetResponse)
-def reset(db: Session = Depends(get_db)) -> dict:
+def reset(db=Depends(get_demo_repository)) -> dict:
     if not settings.demo_mode:
         raise HTTPException(
             status_code=403, detail="Demo reset is disabled outside demo mode."

@@ -642,3 +642,17 @@ select[data-state="success"] { border-color: var(--color-success); }
   a:active,
   .agent-orb.listening { transform: none; }
 }
+
+/* Opaque glass surfaces with restrained tactile depth. */
+html { color-scheme: light; }
+.panel, .agent-stage { box-shadow: var(--shadow-surface); }
+.ghost-button, .secondary-button, .action-button, .gesture-button { box-shadow: var(--shadow-control); }
+.suggestion-intent-input, .camera-preview { box-shadow: var(--shadow-inset); }
+.segmented { box-shadow: var(--shadow-inset); }
+.segment.active { box-shadow: var(--shadow-control); }
+button:active:not(:disabled) { box-shadow: var(--shadow-inset); }
+.toast { box-shadow: var(--shadow-dialog); }
+.check-list strong[data-on="true"] { color: var(--color-error); }
+.memory-item.demoted { opacity: 1; }
+.tutorial-dot { width: 2.75rem; height: 2.75rem; border: 1rem solid var(--color-paper-3); }
+.camera-device, .camera-device select { min-width: 0; max-width: 100%; }

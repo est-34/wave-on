@@ -1,23 +1,21 @@
-# OS
+# OS / 편집기
 .DS_Store
 ._*
 Thumbs.db
 Desktop.ini
-
-# Editors
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# Environment
+# 환경 변수
 .env
 .env.*
 !.env.example
 !.env.sample
 !.env.template
 
-# Logs
+# 로그
 *.log
 logs/
 
@@ -26,21 +24,18 @@ __pycache__/
 *.py[cod]
 .eggs/
 *.egg-info/
-build/
-dist/
-
-# Virtual environments
 .venv/
 venv/
 env/
 ENV/
-
-# Tests and tooling
 .pytest_cache/
 
-# Local databases
+# 빌드 / 배포
+build/
+dist/
+.vercel/
+
+# 로컬 데이터
 *.db
 *.sqlite
 *.sqlite3
-.vercel
-.env*
