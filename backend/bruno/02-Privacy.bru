@@ -1,0 +1,15 @@
+meta {
+  name: Privacy
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/demo/privacy
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+}

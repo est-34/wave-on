@@ -1,67 +1,40 @@
-# Design — SilentOrchestra 2.0
+# 디자인 기준 — SilentOrchestra 2.0
 
-이 앱의 고정된 디자인 시스템입니다. 페이지를 다시 그릴 때마다 먼저 읽고, 페이지별 임의 테마는 만들지 않습니다.
-시스템을 넓혀야 하면 이 파일을 고칩니다.
+[문서 안내](../README.md#관련-문서)
 
-**토큰 값의 출처는 [`frontend/tokens.css`](../frontend/tokens.css)** 입니다(색·타입·간격·모션·radius·shadow·z-index 전체).
-DTCG 형식은 [`design/design-tokens.json`](../design/design-tokens.json). 이 문서는 값이 아니라
-**값만 봐서는 알 수 없는 규칙**을 담습니다.
+화면과 소개 이미지의 표현 규칙을 관리합니다. 동작 계약은 [요구사항](../spec.md), 소스 구조는 [구현 계획](../plan.md)을 참고합니다.
 
-## Genre
+## 시각 자산
 
-Atmospheric, with a technical Workbench voice. 캔버스는 어둡지만 페이지를 끌고 가는 것은 분위기가 아니라 기능입니다.
+[architecture.svg](assets/architecture.svg)는 3개의 동일한 흰색 카드에 아이콘·번호·제목·설명·역할을 배치하고 카드 사이 화살표로 실행 흐름을 표시합니다. 캔버스는 1568×452이며 강조색은 `#526FA8`, 캔버스·아이콘 배경색은 `#EEF2F8`입니다.
 
-## Macrostructure — Workbench
+README의 핵심 기능 이미지는 [key-features.svg](assets/key-features.svg)에서 관리합니다. 3열 카드에 몸짓·맥락 학습, 승인 후 실행, 피드백·개인정보 보호를 요약하며 강조색은 `#526FA8`, 캔버스·아이콘 배경색은 `#EEF2F8`을 사용합니다.
 
-주 작업 레일이 먼저 오고, 맥락과 학습된 근거가 데스크톱에서는 옆에, 모바일에서는 뒤에 붙습니다.
+## UI 규칙
 
-`primary=agent-flow`, `context=left-rail`, `evidence=right-rail`, `mobile=center-first`, `containment=single-layer`
+색·곡률·그림자 값은 [tokens.css](../frontend/css/tokens.css)에서 관리합니다. 표면은 알파 1의 단색이며 backdrop blur를 사용하지 않습니다. 카드에는 밝은 상단 inset과 낮은 강도의 외곽 그림자, 입력·세그먼트 트랙에는 얕은 inset을 적용합니다.
 
-마케팅·콘텐츠 페이지는 현재 없습니다.
+- 작업·맥락·기억은 독립 페이지로 구성하고 작업을 기본 페이지로 표시합니다. 데스크톱은 페이지 안에서 작업과 카메라 또는 관련 정보를 2열로 배치하고 모바일은 1열로 표시합니다. 불투명한 밝은 카드·둥근 모서리·얇은 하이라이트와 낮은 강도의 양방향 그림자를 사용합니다.
+- 장식 구체·동심원·그라데이션·홍보 문구는 제외하고 Orb는 작은 상태 표시로 제한합니다.
+- blue는 주 동작(화면 5% 미만), violet은 학습·제안, error는 오류에 사용하며 색만으로 상태를 전달하지 않습니다.
+- 제목은 IBM Plex Sans KR 700, 본문은 Pretendard Variable 400–600, Mono는 wordmark·실시간 지표에만 사용합니다.
+- 모션은 버튼 press·상태 crossfade만 사용하고 reduced motion은 opacity 120ms 이하로 제한합니다. 포커스 표시·44px 이상 터치 영역을 유지합니다.
+- 주 버튼은 solid blue·한국어 동사, 보조 버튼은 밝은 불투명 표면·선, 삭제 버튼은 error 텍스트만 사용합니다.
+- 성공 토스트는 생략하고 오류·화면 밖 비동기 결과는 고정 안내합니다.
 
-워크벤치는 장식 구체·동심원·그라데이션·홍보 문구 없이 구성합니다. Agent Orb는 상태 옆의 작은 원으로 축소합니다. 상태 안내는 왼쪽 정렬하고, 제스처 입력을 화면 위쪽에서 바로 사용할 수 있도록 높이를 줄입니다. 좌측 맥락과 우측 기억은 얇은 구분선으로 나눕니다. 작은 화면에서는 중앙 작업 다음에 맥락과 기억을 배치합니다.
+## 작업 흐름과 모바일
 
-## Theme — Night Signal
+기존 Workbench 구조·색·글꼴·토큰을 공유합니다. 작업 화면의 활동 선택은 맥락 화면과 동기화합니다. 좌우 손짓은 학습 입력, 손바닥·원형은 확인 입력으로 그룹을 나누고 역할을 텍스트로 표시합니다. 행동을 연결한 뒤 같은 몸짓을 다시 입력하는 버튼을 제공하고 제안이 준비되면 승인 카드로 안내합니다.
 
-- accent(cyan) 사용 면적은 뷰포트의 5% 미만으로 유지합니다.
-- `--color-learning`(violet)은 장식이 아닙니다. **suggestion·learning 상태만** 식별합니다.
-- 상태는 색만으로 전달하지 않고 항상 텍스트·아이콘을 병행합니다(WCAG AA).
+모바일에서는 헤더 동작을 별도 줄로 배치하고 학습 입력·행동·제안을 카메라보다 먼저 표시합니다. 본문 14px·보조 설명 12px 이상, select 16px, 터치 영역 44px 이상을 유지합니다. 긴 버튼 라벨은 줄바꿈하며 대화상자는 안전 영역을 고려한 화면 높이 안에서 스크롤합니다. 실행 결과에는 닫기 버튼과 시뮬레이션 표시를 제공합니다.
 
-## Typography
+## 플로팅 필 탭 바
 
-- Display: IBM Plex Sans KR 700, tracking -0.035em
-- Body: Pretendard Variable 400–600
-- Outlier: IBM Plex Mono 500 — **wordmark와 live metric에만**
+하단 메뉴 외곽과 선택 배경은 완전한 필 곡률(999px)을 사용한다. 선택 배경은 아이콘과 라벨 전체를 감싸며 기존 브랜드 색상을 유지한다. 화면 가장자리·안전 영역과 간격을 두고 본문과 포커스를 가리지 않는다. 대화상자·카드의 곡률은 유지한다.
+작업·맥락·기억 페이지를 hash 링크로 전환하고 현재 페이지를 표시한다. 페이지 제목과 설명을 함께 갱신하고 전환 시 페이지 시작으로 이동한다. 작업에는 입력·후속 행동·학습 제안과 카메라를, 맥락에는 활동 선택·해석·개인정보 보호를, 기억에는 지표·승인된 기억·이벤트·감사 로그를 둔다. 본문 끝에는 메뉴 높이와 하단 간격 이상의 공간을 확보한다. 캡처는 고정된 뷰포트 기준으로 촬영해 메뉴가 화면 하단 중앙에 위치하도록 한다.
 
-`swap`으로 로드하며 한국어 시스템 폴백을 유지합니다.
+## 검증
 
-## Motion
+일반 화면 테스트와 캡처는 데스크톱 가로 16:9(`1920×1080` CSS px), 모바일 세로 19.6:9(`360×784` CSS px, 높이:너비)를 기본 뷰포트로 통일한다. 크기는 브라우저 UI를 제외한 콘텐츠 영역 기준이다.
 
-- 프리미티브는 버튼 press와 상태 crossfade **둘뿐**입니다.
-- ambient loop와 page-load reveal은 없습니다.
-- reduced motion: opacity만, 최대 120ms.
-
-## Microinteractions
-
-- 결과 상태가 이미 화면에 보이면 성공은 조용히 처리합니다(토스트 없음).
-- 고정 토스트는 오류나 화면 밖 비동기 결과에만 씁니다.
-- 모든 컨트롤에 default·hover·focus·active·disabled·loading·error·success가 있습니다.
-- focus ring은 즉시 나타나고, 터치 타깃은 최소 44px입니다.
-
-## CTA
-
-- Primary: solid cyan, 어두운 텍스트, radius 10px, 구체적인 한국어 동사
-- Secondary: 어두운 raised 표면 + rule 보더, primary와 같은 높이·radius
-- Destructive: secondary 표면에 error 색 **텍스트**. 빨강으로 채운 버튼은 쓰지 않습니다.
-
-## 페이지 간 공유 / 차이
-
-| 항상 공유 | 달라도 되는 것 |
-|---|---|
-| SilentOrchestra 워드마크 | 밀도와 evidence 패널 개수 |
-| Night Signal 팔레트와 의미 역할 | 넓은 화면에서 sticky로 둘 레일 |
-| IBM Plex Sans KR + Pretendard 조합 | learning violet의 등장 여부 |
-| Workbench 버튼·필드 보이스 | |
-| 모바일 우선 주 작업 순서 | |
-
-앱 페이지는 enrichment를 쓰지 않습니다. 제품 상태 자체가 시각적 내용입니다.
+페이지 직접 링크·뒤로/앞으로 이동·입력 보존과 모바일 메뉴의 겹침·가로 넘침은 [UI 검증 전략](../plan.md#검증-전략)을 따른다. 카메라·실제 OS 조작은 [별도 장비 점검](../plan.md#남은-작업)으로 확인한다.

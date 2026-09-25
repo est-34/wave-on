@@ -1,0 +1,64 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;700&display=swap");
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css");
+
+:root {
+  color-scheme: light;
+
+  --color-paper: #edf0f5;
+  --color-paper-2: #f8f9fc;
+  --color-paper-3: #ffffff;
+  --color-ink: #202b3d;
+  --color-ink-2: #46546a;
+  --color-muted: #5e6b7e;
+  --color-neutral: #68768a;
+  --color-rule: #cdd5e1;
+  --color-rule-2: #e0e6ee;
+  --color-accent: #2563d9;
+  --color-accent-ink: #ffffff;
+  --color-focus: #1d55bd;
+  --color-learning: #7055b5;
+  --color-success: #237453;
+  --color-error: #b93646;
+  --color-overlay: #d8dee8;
+  --color-accent-wash: #e8effc;
+  --color-shadow: rgb(43 61 91 / 0.08);
+  --color-highlight: #ffffff;
+  --shadow-surface: inset 0 1px 0 var(--color-highlight), 3px 5px 14px var(--color-shadow), -3px -3px 10px var(--color-highlight);
+  --shadow-control: inset 0 1px 0 var(--color-highlight), 2px 3px 7px var(--color-shadow);
+  --shadow-inset: inset 2px 2px 5px var(--color-shadow), inset -2px -2px 5px var(--color-highlight);
+
+  --font-display: "IBM Plex Sans KR", "Apple SD Gothic Neo", sans-serif;
+  --font-body: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", sans-serif;
+  --font-outlier: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.5625rem;
+  --text-xl: 1.953rem;
+  --text-display: clamp(1.9rem, 4vw, 2.75rem);
+
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 2.5rem;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+
+  --rule-hair: 1px;
+  --rule-fine: 2px;
+  --radius-card: 1.5rem;
+  --radius-pill: 999px;
+  --radius-input: 0.875rem;
+  --control-height: 2.75rem;
+  --shadow-dialog: inset 0 1px 0 var(--color-highlight), 0 12px 36px var(--color-shadow);
+
+  --z-sticky: 200;
+  --z-toast: 500;
+}
